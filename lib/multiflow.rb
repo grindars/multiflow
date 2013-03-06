@@ -9,7 +9,7 @@ module Multiflow
   end
 
   def self.persistence
-    @@persistence ||= :none
+    @@persistence
   end
 
   def self.persistence=(persistence)
