@@ -72,7 +72,7 @@ module Multiflow
         state_name = state.name
 
         define_method(:"#{state_name}?") do
-          state_name == current_state.name
+          state_name == send(:"current_#{machine.state_column}").name
         end
 
         if machine.create_scopes?
