@@ -18,7 +18,6 @@ module Multiflow
 
   module ClassMethods
     def machines
-      p @machines
       @machines ||= []
     end
 
