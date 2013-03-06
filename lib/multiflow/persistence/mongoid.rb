@@ -24,7 +24,10 @@ module Multiflow
 
       def ensure_initial_state
         machines.each do |machine|
-          send("#{machine.state_column.to_s}=", current_state.name.to_s) if send(machine.state_column.to_s).blank?
+          if send(machine.state_column.to_s).blank?
+            current_state = send("current_#{machine.state_column}")
+            send("#{machine.state_column.to_s}=", current_state.name.to_s)
+          end
         end
       end
     end
