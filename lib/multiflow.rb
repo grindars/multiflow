@@ -9,7 +9,7 @@ module Multiflow
   end
 
   def self.persistence
-    @@persistence
+    @@persistence ||= nil
   end
 
   def self.persistence=(persistence)
