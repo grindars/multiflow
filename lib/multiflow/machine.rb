@@ -1,4 +1,4 @@
-module Stateflow
+module Multiflow
   class Machine
     attr_accessor :states, :initial_state, :events
     
@@ -26,14 +26,14 @@ module Stateflow
     
     def state(*names, &options)
       names.each do |name|
-        state = Stateflow::State.new(name, &options)
+        state = Multiflow::State.new(name, &options)
         @initial_state = state if @states.empty? || @initial_state_name == name
         @states[name.to_sym] = state
       end
     end
     
     def event(name, &transitions)
-      event = Stateflow::Event.new(name, self, &transitions)
+      event = Multiflow::Event.new(name, self, &transitions)
       @events[name.to_sym] = event
     end
   end

@@ -1,13 +1,13 @@
 require 'spec_helper'
 require 'mongoid'
 
-Stateflow.persistence = :mongoid
+Multiflow.persistence = :mongoid
 
 Mongoid.load!(File.expand_path("../../mongoid.yml", __FILE__), :test)
 
 class MongoRobot
   include Mongoid::Document
-  include Stateflow
+  include Multiflow
 
   field :state
   field :name
@@ -25,7 +25,7 @@ end
 
 class MongoNoScopeRobot
   include Mongoid::Document
-  include Stateflow
+  include Multiflow
 
   field :state
   field :name
@@ -42,7 +42,7 @@ class MongoNoScopeRobot
   end
 end
 
-describe Stateflow::Persistence::Mongoid do
+describe Multiflow::Persistence::Mongoid do
   after do
     MongoRobot.collection.drop
     MongoNoScopeRobot.collection.drop

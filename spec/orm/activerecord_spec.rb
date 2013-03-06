@@ -1,7 +1,7 @@
 require 'spec_helper'
 require 'active_record'
 
-Stateflow.persistence = :active_record
+Multiflow.persistence = :active_record
 
 # change this if sqlite is unavailable
 dbconfig = {
@@ -23,7 +23,7 @@ class TestMigration < ActiveRecord::Migration
       t.column :state, :string
       t.column :name, :string
     end
-    
+
     create_table :active_record_no_scope_robots, :force => true do |t|
       t.column :state, :string
       t.column :name, :string
@@ -38,8 +38,8 @@ class TestMigration < ActiveRecord::Migration
 end
 
 class ActiveRecordRobot < ActiveRecord::Base
-  include Stateflow
-  
+  include Multiflow
+
   stateflow do
     initial :red
 
@@ -52,8 +52,8 @@ class ActiveRecordRobot < ActiveRecord::Base
 end
 
 class ActiveRecordProtectedRobot < ActiveRecord::Base
-  include Stateflow
-  
+  include Multiflow
+
   attr_protected :state
 
   stateflow do
@@ -68,8 +68,8 @@ class ActiveRecordProtectedRobot < ActiveRecord::Base
 end
 
 class ActiveRecordNoScopeRobot < ActiveRecord::Base
-  include Stateflow
-  
+  include Multiflow
+
   attr_protected :state
 
   stateflow do
@@ -85,8 +85,8 @@ class ActiveRecordNoScopeRobot < ActiveRecord::Base
 end
 
 class ActiveRecordStateColumnSetRobot < ActiveRecord::Base
-  include Stateflow
-  
+  include Multiflow
+
   stateflow do
     state_column :status
     initial :red
@@ -99,7 +99,7 @@ class ActiveRecordStateColumnSetRobot < ActiveRecord::Base
   end
 end
 
-describe Stateflow::Persistence::ActiveRecord do
+describe Multiflow::Persistence::ActiveRecord do
   before(:all) { TestMigration.up }
   after(:all) { TestMigration.down }
   after { ActiveRecordRobot.delete_all; ActiveRecordProtectedRobot.delete_all }
@@ -132,7 +132,7 @@ describe Stateflow::Persistence::ActiveRecord do
     end
 
     it "should call the set_current_state with save being true" do
-      @robot.should_receive(:set_current_state).with(@robot.machine.states[:green], {:save=>true})
+      @robot.should_receive(:set_current_state).with(@robot.machine_state.states[:green], {:save=>true})
       @robot.change!
     end
 
@@ -142,7 +142,7 @@ describe Stateflow::Persistence::ActiveRecord do
     end
 
     it "should call save after setting the state column" do
-      @robot.should_receive(:save)
+      @robot.should_receive(:save!)
       @robot.change!
     end
 
@@ -169,7 +169,7 @@ describe Stateflow::Persistence::ActiveRecord do
     end
 
     it "should call the set_current_state with save being false" do
-      @robot.should_receive(:set_current_state).with(@robot.machine.states[:green], {:save=>false})
+      @robot.should_receive(:set_current_state).with(@robot.machine_state.states[:green], {:save=>false})
       @robot.change
     end
 
@@ -215,7 +215,7 @@ describe Stateflow::Persistence::ActiveRecord do
      @robot.current_state
     end
   end
-  
+
   describe "scopes" do
     it "should be added for each state" do
       ActiveRecordRobot.should respond_to(:red)
@@ -223,9 +223,9 @@ describe Stateflow::Persistence::ActiveRecord do
     end
     it "should be added for each state when the state column is not 'state'" do
       ActiveRecordStateColumnSetRobot.should respond_to(:red)
-      ActiveRecordStateColumnSetRobot.should respond_to(:green)    
+      ActiveRecordStateColumnSetRobot.should respond_to(:green)
     end
-    
+
     it "should not be added for each state" do
       ActiveRecordNoScopeRobot.should_not respond_to(:red)
       ActiveRecordNoScopeRobot.should_not respond_to(:green)

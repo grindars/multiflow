@@ -1,9 +1,9 @@
 require 'spec_helper'
 
-Stateflow.persistence = :none
+Multiflow.persistence = :none
 
 class Robot
-  include Stateflow
+  include Multiflow
 
   stateflow do
     initial :green
@@ -19,7 +19,7 @@ class Robot
 end
 
 class Car
-  include Stateflow
+  include Multiflow
 
   stateflow do
     initial :parked
@@ -51,7 +51,7 @@ class Car
 end
 
 class Bob
-  include Stateflow
+  include Multiflow
 
   stateflow do
     state :yellow, :red, :purple
@@ -65,7 +65,7 @@ class Bob
 end
 
 class Dater
-  include Stateflow
+  include Multiflow
 
   stateflow do
     state :single, :dating, :married
@@ -92,7 +92,7 @@ class Dater
 end
 
 class Priority
-  include Stateflow
+  include Multiflow
 
   stateflow do
     initial :medium
@@ -113,7 +113,7 @@ class Priority
 end
 
 class Stater
-  include Stateflow
+  include Multiflow
 
   stateflow do
     initial :bill
@@ -126,18 +126,18 @@ class Stater
   end
 end
 
-describe Stateflow do
+describe Multiflow do
   describe "class methods" do
     it "should respond to stateflow block to setup the intial stateflow" do
       Robot.should respond_to(:stateflow)
     end
 
     it "should respond to the machine attr accessor" do
-      Robot.should respond_to(:machine)
+      Robot.should respond_to(:machine_state)
     end
 
     it "should return all active persistence layers" do
-      Stateflow::Persistence.active.should == [:active_record, :mongo_mapper, :mongoid, :none]
+      Set[*Multiflow::Persistence.active.should] == Set[:active_record, :mongo_mapper, :mongoid, :none]
     end
   end
 
@@ -155,11 +155,7 @@ describe Stateflow do
     end
 
     it "should respond to the current machine" do
-      @r.should respond_to(:machine)
-    end
-
-    it "should respond to available states" do
-      @r.should respond_to(:available_states)
+      @r.should respond_to(:machine_state)
     end
 
     it "should respond to load from persistence" do
@@ -201,7 +197,7 @@ describe Stateflow do
 
   it "robot class should contain red, yellow and green states" do
     robot = Robot.new
-    robot.machine.states.keys.should include(:red, :yellow, :green)
+    robot.machine_state.states.keys.should include(:red, :yellow, :green)
   end
 
   describe "firing events" do
@@ -210,18 +206,18 @@ describe Stateflow do
     subject { robot }
 
     it "should raise an exception if the event does not exist" do
-      lambda { robot.send(:fire_event, :fake) }.should raise_error(Stateflow::NoEventFound)
+      lambda { robot.send(:fire_event, robot.machine_state, :fake) }.should raise_error(Multiflow::NoEventFound)
     end
 
     shared_examples_for "an entity supporting state changes" do
       context "when firing" do
         after(:each) { subject.send(event_method) }
         it "should call the fire method on event" do
-          subject.machine.events[event].should_receive(:fire)
+          subject.machine_state.events[event].should_receive(:fire)
         end
 
         it "should call the fire_event method" do
-          subject.should_receive(:fire_event).with(event, {:save=>persisted})
+          subject.should_receive(:fire_event).with(subject.machine_state, event, {:save=>persisted})
         end
       end
 
@@ -250,12 +246,12 @@ describe Stateflow do
       end
 
       it "should call the exit state before filter on the exiting old state" do
-        @car.machine.states[:parked].should_receive(:execute_action).with(:exit, @car)
+        @car.machine_state.states[:parked].should_receive(:execute_action).with(:exit, @car)
         @car.drive!
       end
 
       it "should call the enter state before filter on the entering new state" do
-        @car.machine.states[:driving].should_receive(:execute_action).with(:enter, @car)
+        @car.machine_state.states[:driving].should_receive(:execute_action).with(:enter, @car)
         @car.drive!
       end
     end
@@ -264,14 +260,14 @@ describe Stateflow do
   describe "persistence" do
     it "should attempt to persist the new state and the name should be a string" do
       robot = Robot.new
-      robot.should_receive(:save_to_persistence).with("yellow", {:save=>true})
+      robot.should_receive(:save_to_persistence).with(robot.machine_state, "yellow", {:save=>true})
       robot.change_color!
     end
 
     it "should attempt to read the initial state from the persistence" do
       robot = Robot.new
 
-      def robot.load_from_persistence
+      def robot.load_from_persistence(machine)
         :red
       end
 
@@ -283,11 +279,11 @@ describe Stateflow do
     it "should raise an error without any decide argument" do
       date = Dater.new
 
-      def date.load_from_persistence
+      def date.load_from_persistence(machine)
         :dating
       end
 
-      lambda { date.fail! }.should raise_error(Stateflow::IncorrectTransition)
+      lambda { date.fail! }.should raise_error(Multiflow::IncorrectTransition)
     end
 
     it "should raise an error if the decision method does not return a valid state" do
@@ -297,7 +293,7 @@ describe Stateflow do
         :lol
       end
 
-      lambda { date.blank_decision! }.should raise_error(Stateflow::NoStateFound, "Decision did not return a state that was set in the 'to' argument")
+      lambda { date.blank_decision! }.should raise_error(Multiflow::NoStateFound, "Decision did not return a state that was set in the 'to' argument")
     end
 
     it "should raise an error if the decision method returns blank/nil" do
@@ -306,13 +302,13 @@ describe Stateflow do
       def date.girls_mood?
       end
 
-      lambda { date.blank_decision! }.should raise_error(Stateflow::NoStateFound, "Decision did not return a state that was set in the 'to' argument")
+      lambda { date.blank_decision! }.should raise_error(Multiflow::NoStateFound, "Decision did not return a state that was set in the 'to' argument")
     end
 
     it "should calculate the decide block or method and transition to the correct state" do
       date = Dater.new
 
-      def date.load_from_persistence
+      def date.load_from_persistence(machine)
         :dating
       end
 
@@ -340,24 +336,7 @@ describe Stateflow do
     end
   end
 
-  describe "previous state" do
-    it "should display the previous state" do
-      stater = Stater.new
-      stater.lolcats!
-
-      stater._previous_state.should == "bill"
-      stater.current_state == "bob"
-    end
-  end
-
-  describe "available states" do
-    it "should return the available states" do
-      robot = Robot.new
-      robot.available_states.should include(:red, :yellow, :green)
-    end
-  end
-
-  describe 'sub-classes of Stateflow\'d classes' do
+  describe 'sub-classes of Multiflow\'d classes' do
     subject { Class.new(Stater) }
 
     it 'shouldn\'t raise an exception' do

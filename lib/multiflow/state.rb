@@ -1,4 +1,4 @@
-module Stateflow
+module Multiflow
   class State
     attr_accessor :name, :options
     

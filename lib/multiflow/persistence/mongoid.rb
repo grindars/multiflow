@@ -1,6 +1,6 @@
-module Stateflow
+module Multiflow
   module Persistence
-    module MongoMapper
+    module Mongoid
       extend ActiveSupport::Concern
 
       included do
@@ -8,22 +8,22 @@ module Stateflow
       end
 
       module ClassMethods
-        def add_scope(state)
+        def add_scope(machine, state)
           scope state.name, where(:state => state.name.to_s)
         end
       end
 
-      module InstanceMethods
-        def load_from_persistence
-          send machine.state_column.to_sym
-        end
+      def load_from_persistence(machine)
+        send machine.state_column.to_sym
+      end
 
-        def save_to_persistence(new_state, options = {})
-          send("#{machine.state_column}=".to_sym, new_state)
-          save if options[:save]
-        end
+      def save_to_persistence(machine, new_state, options = {})
+        send("#{machine.state_column}=".to_sym, new_state)
+        save! if options[:save]
+      end
 
-        def ensure_initial_state
+      def ensure_initial_state
+        machines.each do |machine|
           send("#{machine.state_column.to_s}=", current_state.name.to_s) if send(machine.state_column.to_s).blank?
         end
       end

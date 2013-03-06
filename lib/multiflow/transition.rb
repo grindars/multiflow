@@ -1,4 +1,4 @@
-module Stateflow
+module Multiflow
   class IncorrectTransition < Exception; end
   
   class Transition
