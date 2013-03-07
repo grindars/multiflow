@@ -2,7 +2,7 @@
 
 Gem::Specification.new do |s|
   s.name = "multiflow"
-  s.version = "0.5.0.beta"
+  s.version = "1.0.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 1.2")
   s.authors = ["Ryan Oberholzer", "Sergey Gridasov"]

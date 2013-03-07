@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    multiflow (0.5.0.beta)
+    multiflow (1.0.0)
       activesupport
 
 GEM
