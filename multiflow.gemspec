@@ -20,6 +20,5 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency("activesupport", ">= 0")
   s.add_development_dependency("rspec", ">= 2.0.0")
   s.add_development_dependency("activerecord", ">= 0")
-  s.add_development_dependency("mongoid", ">= 2.0.0.beta.20")
   s.add_development_dependency("sqlite3-ruby", ">= 0")
 end
