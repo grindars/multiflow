@@ -19,11 +19,6 @@ class TestMigration < ActiveRecord::Migration
       t.column :name, :string
     end
 
-    create_table :active_record_protected_robots, :force => true do |t|
-      t.column :state, :string
-      t.column :name, :string
-    end
-
     create_table :active_record_no_scope_robots, :force => true do |t|
       t.column :state, :string
       t.column :name, :string
@@ -32,7 +27,6 @@ class TestMigration < ActiveRecord::Migration
 
   def self.down
     drop_table :active_record_robots
-    drop_table :active_record_protected_robots
     drop_table :active_record_no_scope_robots
   end
 end
@@ -51,26 +45,8 @@ class ActiveRecordRobot < ActiveRecord::Base
   end
 end
 
-class ActiveRecordProtectedRobot < ActiveRecord::Base
-  include Multiflow
-
-  attr_protected :state
-
-  stateflow do
-    initial :red
-
-    state :red, :green
-
-    event :change do
-      transitions :from => :red, :to => :green
-    end
-  end
-end
-
 class ActiveRecordNoScopeRobot < ActiveRecord::Base
   include Multiflow
-
-  attr_protected :state
 
   stateflow do
     create_scopes false
@@ -102,10 +78,9 @@ end
 describe Multiflow::Persistence::ActiveRecord do
   before(:all) { TestMigration.up }
   after(:all) { TestMigration.down }
-  after { ActiveRecordRobot.delete_all; ActiveRecordProtectedRobot.delete_all }
+  after { ActiveRecordRobot.delete_all }
 
   let(:robot) { ActiveRecordRobot.new }
-  let(:protected_robot) { ActiveRecordProtectedRobot.new }
 
   describe "includes" do
     it "should include current_state" do
@@ -151,14 +126,6 @@ describe Multiflow::Persistence::ActiveRecord do
       @robot.change!
       @robot.new_record?.should be_false
       @robot.reload.state.should == "green"
-    end
-
-    it "should save the protected method" do
-      @protected_robot = protected_robot
-      @protected_robot.new_record?.should be_true
-      @protected_robot.change!
-      @protected_robot.new_record?.should be_false
-      @protected_robot.reload.state.should == "green"
     end
   end
 
