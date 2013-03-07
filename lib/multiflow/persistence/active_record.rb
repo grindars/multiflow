@@ -9,7 +9,7 @@ module Multiflow
 
       module ClassMethods
         def add_scope(machine, state)
-          scope state.name, where("#{machine.state_column}".to_sym => state.name.to_s)
+          scope state.name, -> { where("#{machine.state_column}".to_sym => state.name.to_s) }
         end
       end
 
