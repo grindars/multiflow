@@ -17,9 +17,9 @@ Gem::Specification.new do |s|
   s.rubygems_version = "2.0.0"
   s.summary = "State machine that allows dynamic transitions for business workflows"
 
-  s.add_runtime_dependency(%q<activesupport>, [">= 0"])
-  s.add_development_dependency(%q<rspec>, [">= 2.0.0"])
-  s.add_development_dependency(%q<activerecord>, [">= 0"])
-  s.add_development_dependency(%q<mongoid>, [">= 2.0.0.beta.20"])
-  s.add_development_dependency(%q<sqlite3-ruby>, [">= 0"])
+  s.add_runtime_dependency("activesupport", ">= 0")
+  s.add_development_dependency("rspec", ">= 2.0.0")
+  s.add_development_dependency("activerecord", ">= 0")
+  s.add_development_dependency("mongoid", ">= 2.0.0.beta.20")
+  s.add_development_dependency("sqlite3-ruby", ">= 0")
 end
